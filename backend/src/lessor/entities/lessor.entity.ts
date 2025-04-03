@@ -34,8 +34,10 @@ export class Lessor {
     updated_at: Date;
     @Column("date",{name:"deleteAt",nullable:true})
     deleted_at: Date;
-    @OneToMany(() => House, (house) => house.lessor)
-    houses: House[];
+
+   @OneToMany(() => House, (house) => house.lessor)
+   houses: House[];
+
 
     @BeforeInsert()
     DateCreateAT(){

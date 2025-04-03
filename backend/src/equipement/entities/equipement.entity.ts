@@ -1,8 +1,8 @@
   import { House } from 'src/house/entities/house.entity';
   import { Column, Entity, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate, ManyToOne, JoinColumn, OneToMany, ManyToMany } from 'typeorm';
 
-  @Entity('equipement')
-  export class Equipement {
+  @Entity('Equipment')
+  export class Equipment {
     @PrimaryGeneratedColumn()
     id: number;
           @Column("text",{name:"title",nullable:true})
@@ -33,7 +33,7 @@
           @Column("date",{name:"deleted_by",nullable:true})
           deleted_by: number;
           
-          @ManyToMany(() => House, (house) => house.equipements)
+          @ManyToMany(() => House, (house) => house.Equipment)
           houses: House[];
 
           

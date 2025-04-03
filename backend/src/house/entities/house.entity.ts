@@ -1,5 +1,5 @@
 import { Characteristic } from "src/characteristic/entities/characteristic.entity";
-import { Equipement } from "src/equipement/entities/equipement.entity";
+import { Equipment } from "src/equipement/entities/equipement.entity";
 import { Lessor } from "src/lessor/entities/lessor.entity";
 import { Offre } from "src/offre/entities/offre.entity";
 import { Picture } from "src/pictures/entities/picture.entity";
@@ -32,9 +32,16 @@ export class House {
     @Column("integer", { name: "poste_code", nullable: true })
     poste_code: number;
 
-    @Column("text", { name: "image", nullable: true })
-    image: string;
-
+    @Column("text", { name: "surface", nullable: true })
+    surface : number;
+    @Column("text", { name: "rooms", nullable: true })
+    rooms  : number;
+    @Column("integer", { name: "bedrooms", nullable: true })
+    bedrooms  : number;
+    @Column("integer", { name: "bathrooms", nullable: true })
+    bathrooms  : number;
+    @Column("text", { name: "status", nullable: true })
+    status  : string;
     @Column("double precision", { name: "price", nullable: true })
     price: number;
     @Column("double precision", { name: "latitude", nullable: true })
@@ -60,20 +67,24 @@ export class House {
 
     @Column("integer", { name: "deleted_by", nullable: true })
     deleted_by: number;
-    
-    @ManyToMany(() => Equipement, (equipement) => equipement.houses, {
-        cascade: true,
-        eager: true // If you want them always loaded
-    })
-    @JoinTable()
-    equipements: Equipement[];
-    
+   @ManyToMany(() => Equipment, (Equipment) => Equipment.houses, {
+    cascade: true,
+    eager: true
+})
+@JoinTable()
+Equipment: Equipment[];
+
+@Column('jsonb', { nullable: true })
+equipementsQuantities: Record<number, number>;
+
     @ManyToMany(() => Characteristic, (characteristic) => characteristic.houses, {
         cascade: true,
-        eager: true // Add eager loading if you always want to load characteristics
+        eager: true
     })
     @JoinTable()
-    characteristics: Characteristic[];
+    characteristics: Characteristic[];    
+     @Column('jsonb', { nullable: true })
+     characteristicsQuantities: Record<number, number>;  
 
 
     @OneToMany(() => Picture, (picture) => picture.house, { 
@@ -82,14 +93,16 @@ export class House {
     })
     pictures: Picture[];
 
-    @OneToOne(() => Offre, (offre) => offre.house, { cascade: true })
-    @JoinColumn()
-     offre: Offre;
-
+    @OneToMany(() => Offre, (offre) => offre.house, { 
+        cascade: true,
+        onDelete: 'CASCADE' 
+    })
+    offers: Offre[];
+    
     @ManyToOne(() => Lessor, (lessor) => lessor.houses)
     @JoinColumn({ name: 'lessorId' })
     lessor: Lessor;
-  
+
     @ManyToOne(() => User, (user) => user.houses)
     @JoinColumn({ name: 'userId' })
     user: User;
