@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, HttpException, HttpS
 import { HouseService } from './house.service';
 import { CreateHouseDto } from './dto/create-house.dto';
 import { UpdateHouseDto } from './dto/update-house.dto';
+import { House } from './entities/house.entity';
 
 @Controller('house')
 export class HouseController {
@@ -9,13 +10,10 @@ export class HouseController {
 
     @Post('create-house')
     async create(@Body() createHouseDto: CreateHouseDto) {
-        console.log('Controller: Received request to create house with data:', createHouseDto);
         try {
             const result = await this.houseService.create(createHouseDto);
-            console.log('Controller: House created successfully:', result);
             return result;
         } catch (error) {
-            console.error('Controller: Error creating house:', error);
             throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -51,6 +49,14 @@ export class HouseController {
         }
     }
 
+    @Patch('valide-house/:id')
+    async ValidationHouse(@Param('id') id: string, @Body() updateHouseDto: House) {
+        try {
+            return await this.houseService.validationStatus(+id, updateHouseDto);
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
+        }
+    }
     @Delete('delete-house/:id')
     async remove(@Param('id') id: string) {
         try {
@@ -71,4 +77,5 @@ export class HouseController {
             throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 }

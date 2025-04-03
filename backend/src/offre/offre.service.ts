@@ -4,37 +4,50 @@ import { CreateOffreDto } from './dto/create-offre.dto';
 import { UpdateOffreDto } from './dto/update-offre.dto';
 import { Offre } from './entities/offre.entity';
 import { Repository } from 'typeorm';
+import { House } from 'src/house/entities/house.entity';
 
 @Injectable()
 export class OffreService {
   
   constructor(
-        @InjectRepository(Offre)
-        private readonly offreRepository: Repository<Offre>,
+    @InjectRepository(Offre)
+    private readonly offreRepository: Repository<Offre>,
+    @InjectRepository(House)
+    private readonly houseRepository: Repository<House>,
       ) {}
     
       async create(offreData: CreateOffreDto) {
-        let offre =  await this.offreRepository.create(offreData);
-        console.log()
-        return this.offreRepository.save(offre)  }
-    
-        async findAll() {
-          try {
-            return await this.offreRepository.find({ 
-              relations: ['house'] // Include the house relation
-            });
-          } catch (error) {
-            console.error('Error fetching offers:', error);
-            throw new Error('Failed to fetch offers');
-          }
+        const house = await this.houseRepository.findOne({
+            where: { id: offreData.houseId },
+            relations: ['pictures']
+        });
+        
+        if (!house) {
+            throw new Error('House not found');
         }
     
-      async findOne(id: number){
-        return await this.offreRepository.findOne({ where: { id } });
-      }
+        const offre = this.offreRepository.create({
+            ...offreData,
+            house
+        });
+    
+        return this.offreRepository.save(offre);
+    }
+    
+    async findAll() {
+      return this.offreRepository.find({ 
+          relations: ['house', 'house.pictures'] 
+      });
+  }
+  
+  async findOne(id: number) {
+      return await this.offreRepository.findOne({ 
+          where: { id },
+          relations: ['house', 'house.pictures']
+      });
+  }
     
       async update(id: number, updateOffreDto: UpdateOffreDto) {
-        // First find the existing offer
         const existingOffer = await this.offreRepository.findOne({ where: { id } });
         
         if (!existingOffer) {

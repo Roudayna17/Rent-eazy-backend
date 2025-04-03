@@ -12,12 +12,19 @@ export class OffreController {
   create(@Body() createOffreDto: CreateOffreDto) {
     return this.offreService.create(createOffreDto);
   }
-  
   @Get('list-offre')
   async findAll() {
     try {
-      return await this.offreService.findAll();
+      const offers = await this.offreService.findAll();
+      // Log pour vérification
+      console.log('Offers with houses:', offers.map(o => ({
+        id: o.id,
+        hasHouse: !!o.house,
+        houseId: o.house?.id
+      })));
+      return offers;
     } catch (error) {
+      console.error('Controller error:', error);
       throw new HttpException({
         status: HttpStatus.INTERNAL_SERVER_ERROR,
         error: 'Error fetching offers',

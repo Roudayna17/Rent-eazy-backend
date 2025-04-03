@@ -1,5 +1,5 @@
 import { House } from 'src/house/entities/house.entity';
-import { Column, Entity, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate, OneToOne, JoinColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate, OneToOne, JoinColumn, ManyToOne } from 'typeorm';
 
 @Entity('offre')
 export class Offre {
@@ -37,7 +37,10 @@ export class Offre {
         deleted_by: number;
         @Column("boolean",{name:"active",nullable:true})
         active: boolean;
-        @OneToOne(() => House, (house) => house.offre)
+        
+        @ManyToOne(() => House, (house) => house.offers, { 
+            onDelete: 'CASCADE' 
+        })
         @JoinColumn({ name: 'houseId' })
         house: House;
         @BeforeInsert()

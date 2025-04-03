@@ -16,16 +16,16 @@ export class LessorController {
   findAll() {
     return this.lessorService.findAll();
   }
+// lessor.controller.ts
+@Get('lessor/:id')
+findOne(@Param('id') id: string) {
+  return this.lessorService.findOne(+id);
+}
 
-  @Get('lessor/:id')
-  findOne(@Param('id') id: string) {
-    return this.lessorService.findOne(+id);
-  }
-
-  @Patch('update-lessor/:id')
-  update(@Param('id') id: string, @Body() updateLessorDto: UpdateLessorDto) {
-    return this.lessorService.update(+id, updateLessorDto);
-  }
+@Patch('update-lessor/:id')
+update(@Param('id') id: string, @Body() updateLessorDto: UpdateLessorDto) {
+  return this.lessorService.update(+id, updateLessorDto);
+}
 
   @Delete('delete-lessor/:id')
   remove(@Param('id') id: string) {

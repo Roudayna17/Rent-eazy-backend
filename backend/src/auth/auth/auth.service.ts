@@ -116,7 +116,7 @@ export class AuthService {
       email: lessor.email,
       role: 'lessor', // Ajouter un rôle si nécessaire
     };
-
+ console.log(" lessor login", lessor)
     return {
       access_token: this.jwtService.sign(payload, {
         secret: jwtConstants.secret,
@@ -124,5 +124,6 @@ export class AuthService {
       }),
       lessor,
     };
+    
   }
 }
