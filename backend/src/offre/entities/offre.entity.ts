@@ -1,5 +1,8 @@
+import { Commentaire } from 'src/commentaire/entities/commentaire.entity';
+import { Favorite } from 'src/favorite/entities/favorite.entity';
 import { House } from 'src/house/entities/house.entity';
-import { Column, Entity, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate, OneToOne, JoinColumn, ManyToOne } from 'typeorm';
+import { Reservation } from 'src/reservation/entities/reservation.entity';
+import { Column, Entity, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate, OneToOne, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
 @Entity('offre')
 export class Offre {
@@ -13,16 +16,18 @@ export class Offre {
          location: string;
         @Column("text",{name:"type",nullable:true})
         type: string;
-        @Column("text",{name:"TVA",nullable:true})
-        TVA: number;
+        @Column("text",{name:"tva",nullable:true})
+        tva: number;
         @Column("text",{name:"priceHT",nullable:true})
         priceHT: number;
         @Column("text",{name:"priceTTC",nullable:true})
         priceTTC: number;
         @Column("text", { name: "availability", nullable: true })
         availability: string;
-       @Column("text", { name: "time", nullable: true })
+       @Column("time", { name: "time", nullable: true })
         time: string;
+        @Column({ nullable: true })
+        imageUrl: string;
         @Column("int",{name:"createdAt",nullable:true})
         created_at: Date;
         @Column("int",{name:"createdBy",nullable:true})
@@ -37,9 +42,12 @@ export class Offre {
         deleted_by: number;
         @Column("boolean",{name:"active",nullable:true})
         active: boolean;
-        
-        @ManyToOne(() => House, (house) => house.offers, { 
-            onDelete: 'CASCADE' 
+        @OneToMany(() => Reservation, (reservation) => reservation.offre)
+        reservations?: Reservation[]; 
+         @OneToMany(() => Commentaire, (commentaire) => commentaire.OffreId,)
+        commentaires: Commentaire[];
+        @ManyToOne(() => House, (house) => house.offers, {
+        onDelete: 'CASCADE' 
         })
         @JoinColumn({ name: 'houseId' })
         house: House;
@@ -48,7 +56,8 @@ export class Offre {
             // Set created_by with the actual user ID from your auth system
             // this.created_by = user.id;
         }
-      
+        @OneToMany(() => Favorite, (favorite) => favorite.offreId)
+        favorites: Favorite[];
         @BeforeUpdate()
         setUpdateUserId() {
             // Set updated_by with the actual user ID from your auth system

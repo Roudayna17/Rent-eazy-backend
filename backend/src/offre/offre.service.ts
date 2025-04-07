@@ -17,26 +17,31 @@ export class OffreService {
       ) {}
     
       async create(offreData: CreateOffreDto) {
+        // Recherche de la maison
         const house = await this.houseRepository.findOne({
-            where: { id: offreData.houseId },
-            relations: ['pictures']
+          where: { id: offreData.houseId },
+          relations: ['pictures'], // On récupère aussi les images liées à la maison
         });
-        
+      
         if (!house) {
-            throw new Error('House not found');
+          throw new Error('House not found');
         }
-    
+      
+        // Vérification si la maison a des images et sélection de la première image
+        const imageUrl = house.pictures?.length > 0 ? house.pictures[0]?.url : null;
+      
         const offre = this.offreRepository.create({
-            ...offreData,
-            house
+          ...offreData,
+          imageUrl, // Image principale (si elle existe)
+          house
         });
-    
+      
         return this.offreRepository.save(offre);
-    }
-    
+      }
+      
     async findAll() {
       return this.offreRepository.find({ 
-          relations: ['house', 'house.pictures'] 
+          relations: ['house', 'house.pictures','commentaires','reservations'] 
       });
   }
   

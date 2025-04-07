@@ -29,10 +29,8 @@ const hash = (await (bcrypt.hash(password, saltOrRounds))).toString();
 console.log("hash",hash)
 return hash
 }
-
-
-  findAll() {
-    return  this.userRepository.findAndCount()
+findAll() {
+    return  this.userRepository.findAndCount({relations:['notifications','houses']})
   }
 
   findOne(idUser: number) {
@@ -53,7 +51,7 @@ return hash
   remove(id: number) {
     return this.userRepository.delete(id)
   }
-  async removeMultiple(toDelete: number[]) {   
+  async removeMultiple(toDelete: number[]) {
 
     let resultDelete: boolean = null
     let resultDisable: boolean = null

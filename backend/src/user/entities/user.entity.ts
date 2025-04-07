@@ -1,5 +1,6 @@
 import { House } from "src/house/entities/house.entity";
 import { BeforeInsert, BeforeRemove, BeforeUpdate, Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Notification } from "src/notification/entities/notification.entity";
 @Entity("User")
 export class User {
     @PrimaryGeneratedColumn()
@@ -39,6 +40,8 @@ export class User {
 
     @OneToMany(() => House, (house) => house.user,)
     houses: House[];
+    @OneToMany(() => Notification, (notification) => notification.user)
+    notifications: Notification[];
     @BeforeInsert()
     DateCreateAT(){
         this.created_at= new Date()// date de systeme
