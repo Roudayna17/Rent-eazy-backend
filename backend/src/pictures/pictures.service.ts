@@ -28,9 +28,9 @@ export class PicturesService {
   async createPicture(createPictureDto: PictureDto) {
 
       cloudinary.config({ 
-        cloud_name: 'dzd04po8j', 
-        api_key: '417573485835699', 
-        api_secret: 'uvfmjSLJDsFYOWgd-SCIGVYWo0E' 
+        cloud_name: 'dtn0c7zdw', 
+        api_key: '534884199367526', 
+        api_secret: 'DQtLnSTEvwDQNPN18cuL_esmcQg' 
       });
       await cloudinary.uploader.upload(createPictureDto.url,{ eager: [{ fetch_format: "auto" } ]}, function (error: any, result: any,) {
           if (result?.eager[0].url) {

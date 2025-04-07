@@ -121,21 +121,20 @@ async findAll() {
 async update(id: number, updateHouseDto: UpdateHouseDto, lessorId?: number){
   const house = await this.houseRepository.findOne({
     where: { id, lessor: { id: lessorId } },
-    relations: ['Equipment', 'characteristics'],
+    relations: ['Equipment', 'characteristics','pictures'],
 });
 
 if (!house) {
     throw new NotFoundException(`House with ID ${id} not found or you don't have permission`);
 }
 
-  // تحديث الحقول الأساسية
   this.houseRepository.merge(house, {
     ...updateHouseDto,
     Equipment: [],
-    characteristics: []
+    characteristics: [],
+    pictures:[]
   });
 
-  // تحديث المعدات
   if (updateHouseDto.Equipment) {
     const equipIds = updateHouseDto.Equipment.map(e => e.equipementId);
     house.Equipment = await this.equipementRepository.findByIds(equipIds);
@@ -144,8 +143,24 @@ if (!house) {
       return acc;
     }, {});
   }
+  if (updateHouseDto.pictures?.length) {
+    // Supprimer les anciennes photos si tu veux les remplacer :
+    await this.pictureRepository.delete({ house: { id } });
+  
+    const newPictures = updateHouseDto.pictures.map(pic => {
+      const picture = new Picture();
+      picture.url = typeof pic === 'string' ? pic : pic.url;
+      if (typeof pic !== 'string' && pic.cloudinaryId) {
+        picture.cloudinaryId = pic.cloudinaryId;
+      }
+      picture.house = house;
+      return picture;
+    });
+  
+    await this.pictureRepository.save(newPictures);
+  }
+  
 
-  // تحديث الخصائص
   if (updateHouseDto.characteristics) {
     const charIds = updateHouseDto.characteristics.map(c => c.characteristicId);
     house.characteristics = await this.characteristicRepository.findByIds(charIds);

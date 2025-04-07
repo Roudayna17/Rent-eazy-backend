@@ -22,4 +22,5 @@ export class UpdateHouseDto {
 Equipment?: { equipementId: number; quantite: number }[];
  characteristics?: { characteristicId: number; quantite: number }[];
    created_by: number;
+  removedPictures: boolean;
 }
