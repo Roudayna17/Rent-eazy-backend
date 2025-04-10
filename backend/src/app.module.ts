@@ -19,7 +19,6 @@ import { NotificationModule } from './notification/notification.module';
 import { ReservationModule } from './reservation/reservation.module';
 import { Commentaire } from './commentaire/entities/commentaire.entity';
 import { CommentaireModule } from './commentaire/commentaire.module';
-import { FavoriteModule } from './favorite/favorite.module';
 
 @Module({
   imports: [
@@ -46,7 +45,7 @@ import { FavoriteModule } from './favorite/favorite.module';
     CharacteristicModule,
     HouseModule,
     CloudinaryModule,
-    PicturesModule,NotificationModule,ReservationModule,CommentaireModule, FavoriteModule
+    PicturesModule,NotificationModule,ReservationModule,CommentaireModule
     
   ],
   controllers: [AppController],

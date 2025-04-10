@@ -1,4 +1,5 @@
 import { Characteristic } from "src/characteristic/entities/characteristic.entity";
+import { Commentaire } from "src/commentaire/entities/commentaire.entity";
 import { Equipment } from "src/equipement/entities/equipement.entity";
 import { Lessor } from "src/lessor/entities/lessor.entity";
 import { Offre } from "src/offre/entities/offre.entity";
@@ -106,7 +107,10 @@ equipementsQuantities: Record<number, number>;
     @ManyToOne(() => User, (user) => user.houses)
     @JoinColumn({ name: 'userId' })
     user: User;
-
+  
+    @OneToMany(() => Commentaire, commentaire => commentaire.house)
+    commentaires: Commentaire[];
+    
     @BeforeInsert()
     datecreate(){
         this.created_at= new Date()
