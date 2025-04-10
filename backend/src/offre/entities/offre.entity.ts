@@ -1,5 +1,4 @@
 import { Commentaire } from 'src/commentaire/entities/commentaire.entity';
-import { Favorite } from 'src/favorite/entities/favorite.entity';
 import { House } from 'src/house/entities/house.entity';
 import { Reservation } from 'src/reservation/entities/reservation.entity';
 import { Column, Entity, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate, OneToOne, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
@@ -44,7 +43,7 @@ export class Offre {
         active: boolean;
         @OneToMany(() => Reservation, (reservation) => reservation.offre)
         reservations?: Reservation[]; 
-         @OneToMany(() => Commentaire, (commentaire) => commentaire.OffreId,)
+        @OneToMany(() => Commentaire, commentaire => commentaire.offre)
         commentaires: Commentaire[];
         @ManyToOne(() => House, (house) => house.offers, {
         onDelete: 'CASCADE' 
@@ -56,8 +55,7 @@ export class Offre {
             // Set created_by with the actual user ID from your auth system
             // this.created_by = user.id;
         }
-        @OneToMany(() => Favorite, (favorite) => favorite.offreId)
-        favorites: Favorite[];
+       
         @BeforeUpdate()
         setUpdateUserId() {
             // Set updated_by with the actual user ID from your auth system

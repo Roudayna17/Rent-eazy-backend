@@ -15,7 +15,7 @@ export class NotificationService {
     const notification = this.notificationRepository.create({
       ...createNotificationDto,
       isRead: false,
-      createdAt: new Date(),
+      created_at: new Date(),
     });
     return this.notificationRepository.save(notification);
   }
@@ -23,7 +23,7 @@ export class NotificationService {
   async getUserNotifications(userId: number) {
     return this.notificationRepository.find({
       where: { user: { id: userId } },
-      order: { createdAt: 'DESC' },
+      order: { created_at: 'DESC' },
       relations: ['reservation'],
     });
   }
@@ -41,7 +41,7 @@ export class NotificationService {
   async getReservationNotifications(reservationId: number) {
     return this.notificationRepository.find({
       where: { reservation: { id: reservationId } },
-      order: { createdAt: 'DESC' },
+      order: { created_at: 'DESC' },
     });
   }
 }

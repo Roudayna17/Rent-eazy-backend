@@ -26,8 +26,17 @@ export class HouseService {
 
   ) {}
   async create(houseData: CreateHouseDto) {
+    const lessor = await this.lessorRepository.findOne({
+      where: { id: houseData.lessorId }
+    });
+  
+    if (!lessor) {
+      throw new NotFoundException(`Lessor with ID ${houseData.lessorId} not found`);
+    }
+  
   const house = this.houseRepository.create({
     ...houseData,
+    lessor,
     Equipment: [],
     characteristics: [],
     pictures:[]
@@ -230,4 +239,6 @@ validationStatus(id:number,houseData:House){
     id:+id,
   ...houseData  })
 }
+
+
 }

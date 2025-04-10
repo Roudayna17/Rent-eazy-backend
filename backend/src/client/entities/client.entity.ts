@@ -1,5 +1,4 @@
 import { Commentaire } from "src/commentaire/entities/commentaire.entity";
-import { Favorite } from "src/favorite/entities/favorite.entity";
 import { Reservation } from "src/reservation/entities/reservation.entity";
 import { BeforeInsert, BeforeRemove, BeforeUpdate, Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 @Entity("client")
@@ -38,10 +37,8 @@ export class Client {
     deleted_at: Date;
     @OneToMany(() => Reservation, (reservation) => reservation.clientId,)
     reservations: Reservation[];
-    @OneToMany(() => Commentaire, (commentaire) => commentaire.clientId,)
+    @OneToMany(() => Commentaire, commentaire => commentaire.client)
     commentaires: Commentaire[];
-    @OneToMany(() => Favorite, (favorite) => favorite.clientId)
-favorites: Favorite[];
     @BeforeInsert()
     DateCreateAT(){
         this.created_at= new Date()// date de systeme

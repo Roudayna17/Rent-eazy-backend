@@ -1,14 +1,8 @@
-import { Client } from "src/client/entities/client.entity";
-
+// create-commentaire.dto.ts
 export class CreateCommentaireDto {
-    id: number;
-
-  content: string;
-
-  urlImage: string
-
-  randonneeId: number ;
-
-  clientId: Client | null; 
-  
+  readonly content: string;
+  readonly rating: number;
+  readonly houseId: number;
+  readonly offreId: number; 
+  readonly clientId: number;
 }

@@ -16,7 +16,7 @@ export class Reservation {
     clientId: number | null;
     @Column("boolean", { name: "status", nullable: true })
     Status: boolean;
-    @Column("int",{name:"createdAt",nullable:true})
+    @Column("int",{name:"created_at",nullable:true})
     created_at: Date;
     @Column("int",{name:"createdBy",nullable:true})
     created_by: number;
