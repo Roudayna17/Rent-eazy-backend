@@ -1,4 +1,3 @@
-// commentaire.controller.ts
 import { Controller, Get, Post, Body, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { CommentaireService } from './commentaire.service';
 import { CreateCommentaireDto } from './dto/create-commentaire.dto';
@@ -22,13 +21,14 @@ export class CommentaireController {
     return this.commentaireService.findOne(id);
   }
 
-  @Get('/house/:houseId')
-  findByHouseId(@Param('houseId', ParseIntPipe) houseId: number) {
-    return this.commentaireService.findByHouseId(houseId);
+  // Nouvelle route pour les commentaires par offre
+  @Get('/offre/:offreId')
+  findByOffreId(@Param('offreId', ParseIntPipe) offreId: number) {
+    return this.commentaireService.findByOffreId(offreId);
   }
 
-  @Get('/average/:houseId')
-  getAverageRating(@Param('houseId', ParseIntPipe) houseId: number) {
-    return this.commentaireService.getAverageRating(houseId);
+  @Get('/average/:offreId')
+  getAverageRating(@Param('offreId', ParseIntPipe) offreId: number) {
+    return this.commentaireService.getAverageRatingByOffre(offreId);
   }
 }

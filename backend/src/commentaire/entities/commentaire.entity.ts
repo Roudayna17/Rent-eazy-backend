@@ -25,9 +25,12 @@ export class Commentaire {
     @JoinColumn({ name: 'offreId' }) 
     offre: Offre;
   
-    @ManyToOne(() => House, house => house.commentaires)
+    @ManyToOne(() => House, house => house.commentaires, {
+      onDelete: 'CASCADE'
+    })
     @JoinColumn({ name: 'houseId' })
     house: House;
+    
   
     @ManyToOne(() => Client, client => client.commentaires)
     @JoinColumn({ name: 'clientId' })

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto, LoginUser } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
@@ -72,4 +72,16 @@ if (!allIntegers) {
   async findByEmail(email: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { email } });
 }
+  // New updatePassword method
+  async updatePassword(email: string, newPassword: string): Promise<User> {
+    // Find the user by email
+    const user = await this.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    // Hash the new password
+    user.password = await this.hashPassword(newPassword);
+    // Save the updated user
+    return this.userRepository.save(user);
+  }
 }

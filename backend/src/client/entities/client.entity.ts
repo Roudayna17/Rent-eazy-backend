@@ -17,8 +17,8 @@ export class Client {
     password_confirme: string;
     @Column("text",{name:"saltround",nullable:true})
     saltround: number;
-    @Column("text",{name:"adresse",nullable:true})
-    adresse: string;
+    @Column("text",{name:"address",nullable:true})
+    address: string;
     @Column("text",{name:"city",nullable:true})
     city: string;
     @Column("boolean",{name:"active",nullable:true})
@@ -35,7 +35,7 @@ export class Client {
     updated_at: Date;
     @Column("date",{name:"deleteAt",nullable:true})
     deleted_at: Date;
-    @OneToMany(() => Reservation, (reservation) => reservation.clientId,)
+    @OneToMany(() => Reservation, (reservation) => reservation.client,)
     reservations: Reservation[];
     @OneToMany(() => Commentaire, commentaire => commentaire.client)
     commentaires: Commentaire[];

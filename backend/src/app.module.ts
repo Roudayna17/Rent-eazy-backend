@@ -15,10 +15,10 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { PicturesModule } from './pictures/pictures.module';
 import { LessorModule } from './lessor/lessor.module';
 import { OffreModule } from './offre/offre.module';
-import { NotificationModule } from './notification/notification.module';
 import { ReservationModule } from './reservation/reservation.module';
 import { Commentaire } from './commentaire/entities/commentaire.entity';
 import { CommentaireModule } from './commentaire/commentaire.module';
+import { FeedbackModule } from './feedback/feedback.module';
 
 @Module({
   imports: [
@@ -45,7 +45,7 @@ import { CommentaireModule } from './commentaire/commentaire.module';
     CharacteristicModule,
     HouseModule,
     CloudinaryModule,
-    PicturesModule,NotificationModule,ReservationModule,CommentaireModule
+    PicturesModule,ReservationModule,CommentaireModule, FeedbackModule
     
   ],
   controllers: [AppController],

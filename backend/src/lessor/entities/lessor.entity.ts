@@ -18,8 +18,8 @@ export class Lessor {
     password_confirme: string;
     @Column("text",{name:"saltround",nullable:true})
     saltround: number;
-    @Column("text",{name:"adresse",nullable:true})
-    adresse: string;
+    @Column("text",{name:"address",nullable:true})
+    address: string;
     @Column("text",{name:"city",nullable:true})
     city: string;
     @Column("text",{name:"state",nullable:true})
