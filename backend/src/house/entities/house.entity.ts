@@ -108,8 +108,9 @@ equipementsQuantities: Record<number, number>;
     @JoinColumn({ name: 'userId' })
     user: User;
   
-    @OneToMany(() => Commentaire, commentaire => commentaire.house)
+    @OneToMany(() => Commentaire, commentaire => commentaire.house, { cascade: ['remove'] })
     commentaires: Commentaire[];
+    
     
     @BeforeInsert()
     datecreate(){

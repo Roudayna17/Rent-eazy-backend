@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -83,4 +83,17 @@ if (!allIntegers) {
 
   return true 
   }
+
+    // New updatePassword method
+    async updatePassword(email: string, newPassword: string): Promise<Client> {
+      // Find the user by email
+      const client = await this.findByEmail(email);
+      if (!client) {
+        throw new NotFoundException('User not found');
+      }
+      // Hash the new password
+      client.password = await this.hashPassword(newPassword);
+      // Save the updated user
+      return this.clientRepository.save(client);
+    }
 }

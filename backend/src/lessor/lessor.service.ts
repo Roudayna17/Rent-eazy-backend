@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateLessorDto } from './dto/create-lessor.dto';
 import { UpdateLessorDto } from './dto/update-lessor.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -73,4 +73,16 @@ if (!allIntegers) {
  findByEmail(email: string) {
   return this.lessorRepository.findOne({where:{email:email}})
 }
+  // New updatePassword method
+  async updatePassword(email: string, newPassword: string): Promise<Lessor> {
+    // Find the user by email
+    const lessor = await this.findByEmail(email);
+    if (!lessor) {
+      throw new NotFoundException('User not found');
+    }
+    // Hash the new password
+    lessor.password = await this.hashPassword(newPassword);
+    // Save the updated user
+    return this.lessorRepository.save(lessor);
+  }
 }

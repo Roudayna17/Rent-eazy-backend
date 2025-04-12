@@ -1,4 +1,3 @@
-// commentaire.service.ts
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -14,29 +13,40 @@ export class CommentaireService {
   constructor(
     @InjectRepository(Commentaire)
     private readonly commentaireRepository: Repository<Commentaire>,
+    @InjectRepository(Client)
+    private readonly clientRepository: Repository<Client>,
+    @InjectRepository(House)
+    private readonly houseRepository: Repository<House>,
+    @InjectRepository(Offre)
+    private readonly offreRepository: Repository<Offre>,
+
   ) {}
-async create(createCommentaireDto: CreateCommentaireDto): Promise<Commentaire> {
 
-  const commentaire = new Commentaire();
-  commentaire.content = createCommentaireDto.content;
-  commentaire.rating = createCommentaireDto.rating;
-
-  commentaire.client = { id: createCommentaireDto.clientId } as Client;
-  commentaire.house = { id: createCommentaireDto.houseId } as House;
-
-  if (createCommentaireDto.offreId > 0) {
-    commentaire.offre = { id: createCommentaireDto.offreId } as Offre;
-  } else {
-    console.warn('Aucun offreId valide fourni, offreId sera null');
+  async create(createCommentaireDto: CreateCommentaireDto): Promise<Commentaire> {
+    // Verify all referenced entities exist
+    const [client, house, offre] = await Promise.all([
+      this.clientRepository.findOne({ where: { id: createCommentaireDto.clientId } }),
+      this.houseRepository.findOne({ where: { id: createCommentaireDto.houseId } }),
+      this.offreRepository.findOne({ where: { id: createCommentaireDto.offreId } }),
+    ]);
+  
+    if (!client || !house || !offre) {
+      throw new Error('One or more referenced entities do not exist');
+    }
+  
+    const commentaire = new Commentaire();
+    commentaire.content = createCommentaireDto.content;
+    commentaire.rating = createCommentaireDto.rating;
+    commentaire.client = client;
+    commentaire.house = house;
+    commentaire.offre = offre;
+  
+    return this.commentaireRepository.save(commentaire);
   }
-
-  return this.commentaireRepository.save(commentaire);
-}
-
 
   async findAll(): Promise<Commentaire[]> {
     return await this.commentaireRepository.find({
-      relations: ['client', 'offre','offre.house'],
+      relations: ['client', 'offre', 'offre.house'],
     });
   }
 
@@ -46,10 +56,12 @@ async create(createCommentaireDto: CreateCommentaireDto): Promise<Commentaire> {
       relations: ['client', 'house', 'offre'],
     });
   }
-  async findByHouseId(houseId: number): Promise<Commentaire[]> {
+
+  // Nouvelle méthode pour trouver par offre ID
+  async findByOffreId(offreId: number): Promise<Commentaire[]> {
     return await this.commentaireRepository.find({
-      where: { house: { id: houseId } },
-      relations: ['client', 'offre', 'house'], 
+      where: { offre: { id: offreId } },
+      relations: ['client', 'house', 'offre'],
       order: { createdAt: 'DESC' },
     });
   }
@@ -63,11 +75,12 @@ async create(createCommentaireDto: CreateCommentaireDto): Promise<Commentaire> {
     await this.commentaireRepository.delete(id);
   }
 
-  async getAverageRating(houseId: number): Promise<number> {
+  // Nouvelle méthode pour la moyenne par offre
+  async getAverageRatingByOffre(offreId: number): Promise<number> {
     const result = await this.commentaireRepository
       .createQueryBuilder('commentaire')
       .select('AVG(commentaire.rating)', 'average')
-      .where('commentaire.houseId = :houseId', { houseId })
+      .where('commentaire.offreId = :offreId', { offreId })
       .getRawOne();
 
     return parseFloat(result.average) || 0;
