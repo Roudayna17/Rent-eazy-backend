@@ -65,15 +65,24 @@ export class CharacteristicService {
     return this.characteristicRepository.save(characteristic);
   }
   async removeMultiple(toDelete: number[]) {
-    // // Vérifie que tous les éléments du tableau sont des nombres valides
     const allIntegers = toDelete.every((item) => Number.isInteger(item));
     if (!allIntegers) {
       throw new Error('Les IDs fournis ne sont pas valides');
     }
-
-    
-    const result = await this.characteristicRepository.delete(toDelete);
-    return result.affected > 0;
+  
+    return this.characteristicRepository.manager.transaction(async (transactionalEntityManager) => {
+      // First delete from junction table
+      await transactionalEntityManager
+        .createQueryBuilder()
+        .delete()
+        .from('house_characteristics_characteristic')
+        .where('characteristicId IN (:...ids)', { ids: toDelete })
+        .execute();
+  
+      // Then delete characteristics
+      const result = await transactionalEntityManager.delete(Characteristic, toDelete);
+      return result.affected > 0;
+    });
   }
   
 }

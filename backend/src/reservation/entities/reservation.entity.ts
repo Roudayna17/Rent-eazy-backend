@@ -1,5 +1,5 @@
 // src/reservation/entities/reservation.entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, JoinColumn, BeforeInsert, BeforeUpdate, BeforeRemove } from 'typeorm';
 import { Client } from '../../client/entities/client.entity';
 import { Offre } from '../../offre/entities/offre.entity';
 
@@ -18,21 +18,37 @@ export class Reservation {
       offre: Offre;
       
 
-    @CreateDateColumn()
+    @Column('date', { name: 'createdat' , nullable: true})
     createdAt: Date;
 
     @Column({ default: false })
-    status: boolean; // false = en attente, true = acceptée
+    status: boolean; 
 
     @Column({ default: false })
-    isRead: boolean; // si le client a vu la notification
+    isRead: boolean; 
 
     @Column({ nullable: true })
-    decisionDate: Date; // quand le propriétaire a pris la décision
+    decisionDate: Date; 
 
     @Column({ nullable: true })
-    decisionMessage: string; // message optionnel du propriétaire
-    
+    decisionMessage: string; 
+  
     @Column({ default: false })
     isRejected: boolean;
+    @Column("date",{name:"updateAt",nullable:true})
+    updated_at: Date;
+    @Column("date",{name:"deleted_at",nullable:true})
+    deleted_at: Date;
+     @BeforeInsert()
+               DateCreateAT(){
+                   this.createdAt= new Date()
+               }
+               @BeforeUpdate()
+               DateUpdateAT(){
+                   this.updated_at= new Date()
+               }
+               @BeforeRemove()
+               DateDeleteAT(){
+                   this.deleted_at= new Date()
+               }
 }

@@ -1,7 +1,7 @@
 import { Commentaire } from 'src/commentaire/entities/commentaire.entity';
 import { House } from 'src/house/entities/house.entity';
 import { Reservation } from 'src/reservation/entities/reservation.entity';
-import { Column, Entity, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate, OneToOne, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate, OneToOne, JoinColumn, ManyToOne, OneToMany, BeforeRemove } from 'typeorm';
 
 @Entity('offre')
 export class Offre {
@@ -15,11 +15,11 @@ export class Offre {
          location: string;
         @Column("text",{name:"type",nullable:true})
         type: string;
-        @Column("text",{name:"tva",nullable:true})
+        @Column("decimal",{name:"tva",nullable:true})
         tva: number;
-        @Column("text",{name:"priceHT",nullable:true})
+        @Column("decimal",{name:"priceHT",nullable:true})
         priceHT: number;
-        @Column("text",{name:"priceTTC",nullable:true})
+        @Column("decimal",{name:"priceTTC",nullable:true})
         priceTTC: number;
         @Column("text", { name: "availability", nullable: true })
         availability: string;
@@ -27,10 +27,10 @@ export class Offre {
         time: string;
         @Column({ nullable: true })
         imageUrl: string;
-        @Column("int",{name:"createdAt",nullable:true})
-        created_at: Date;
-        @Column("int",{name:"createdBy",nullable:true})
-        created_by: number;
+        @Column("timestamp", { name: "createdAt", nullable: true })
+         created_at: Date;
+         @Column("timestamp", { name: "createdBy", nullable: true })
+         created_by: Date;        
         @Column("date",{name:"updateAt",nullable:true})
         updated_at: Date;
         @Column("int",{name:"updateBy",nullable:true})
@@ -51,15 +51,16 @@ export class Offre {
         @JoinColumn({ name: 'houseId' })
         house: House;
         @BeforeInsert()
-        setCreateUserId() {
-            // Set created_by with the actual user ID from your auth system
-            // this.created_by = user.id;
-        }
-       
-        @BeforeUpdate()
-        setUpdateUserId() {
-            // Set updated_by with the actual user ID from your auth system
-            // this.updated_by = user.id;
-        }
+           DateCreateAT(){
+               this.created_at= new Date()// date de systeme
+           }
+           @BeforeUpdate()
+           DateUpdateAT(){
+               this.updated_at= new Date()
+           }
+           @BeforeRemove()
+           DateDeleteAT(){
+               this.deleted_at= new Date()
+           }
     
 }

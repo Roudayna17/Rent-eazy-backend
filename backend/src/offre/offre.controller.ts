@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, HttpException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, HttpException, ParseIntPipe, Query } from '@nestjs/common';
 import { OffreService } from './offre.service';
 import { CreateOffreDto } from './dto/create-offre.dto';
 import { UpdateOffreDto } from './dto/update-offre.dto';
@@ -66,8 +66,45 @@ export class OffreController {
     return this.offreService.delete(+id);
   }
   @Post('delete-multiple')
-  async deleteMultipleOffres(@Body() selectedOffres:any) {
-  console.log('Selected houses to delete:', selectedOffres);
-  return this.offreService.removeMultiple(selectedOffres);
+  async deleteMultipleOffres(@Body() body: { ids: number[] }) {
+    try {
+      if (!body.ids || !Array.isArray(body.ids)) {
+        throw new HttpException('Liste d\'IDs invalide', HttpStatus.BAD_REQUEST);
+      }
+  
+      const result = await this.offreService.removeMultiple(body.ids);
+      
+      if (result) {
+        return { 
+          success: true,
+          message: `${body.ids.length} offre(s) supprimée(s) avec succès`
+        };
+      } else {
+        throw new HttpException('Échec de la suppression', HttpStatus.INTERNAL_SERVER_ERROR);
+      }
+    } catch (error) {
+      throw new HttpException(
+        error.message,
+        error.status || HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+  }
+  @Get('analytics/stats')
+  async getOfferStatistics() {
+    try {
+      return await this.offreService.getOfferStatistics();
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+
+
+  @Get('analytics/reservations')
+  async getOffersWithReservationCount() {
+    try {
+      return await this.offreService.getOffersWithReservationCount();
+    } catch (error) {
+      throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }

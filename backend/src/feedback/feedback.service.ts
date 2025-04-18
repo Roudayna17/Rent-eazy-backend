@@ -14,4 +14,11 @@ export class FeedbackService {
     const feedback = this.feedbackRepository.create(feedbackData);
     return this.feedbackRepository.save(feedback);
   }
+  async findAll(): Promise<Feedback[]> {
+    return this.feedbackRepository.find({ order: { createdAt: 'DESC' } });
+  }
+  async remove(id: number): Promise<void> {
+    await this.feedbackRepository.delete(id);
+  }
+  
 }

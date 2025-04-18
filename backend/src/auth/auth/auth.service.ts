@@ -43,23 +43,28 @@ export class AuthService {
     return user;
   }
 
-  // Valider un client
   async validateClient(loginClient: LoginClient) {
+    console.log('Tentative de connexion avec:', loginClient.email);
     const client = await this.clientService.findByEmail(loginClient.email);
+    console.log('Client trouvé:', client);
 
     if (!client) {
-      throw new NotFoundException('Client not found');
+        throw new NotFoundException('Client not found');
     }
 
+    console.log('Comparaison des mots de passe:');
+    console.log('Mot de passe fourni:', loginClient.password);
+    console.log('Mot de passe stocké:', client.password);
+    
     const isPasswordValid = await bcrypt.compare(loginClient.password, client.password);
+    console.log('Résultat de la comparaison:', isPasswordValid);
 
     if (!isPasswordValid) {
-      throw new BadRequestException('Invalid password');
+        throw new BadRequestException('Invalid password');
     }
 
     return client;
-  }
-
+}
   // Valider un lessor
   async validateLessor(loginLessor: LoginLessor) {
     const lessor = await this.lessorService.findByEmail(loginLessor.email);
@@ -99,6 +104,7 @@ export class AuthService {
   // Login client
   async clientLogin(loginClient: LoginClient) {
     const client = await this.validateClient(loginClient);
+    console.log("client",client)
 
     const payload = {
       id: client.id,
@@ -177,28 +183,25 @@ export class AuthService {
   // Reset the password after verifying the reset code
   async resetPassword(resetDto: ResetPasswordDto) {
     const { email, role, code, newPassword } = resetDto;
+    console.log(`Nouveau mot de passe en clair pour [${role}] ${email} : ${newPassword}`);
     // Find the reset record that matches email, role, and code
     const resetRecord = await this.passwordResetRepository.findOne({
       where: { email, role, code },
     });
 
-    // Check if the record exists and is not expired
     if (!resetRecord || resetRecord.expiresAt < new Date()) {
       throw new BadRequestException('Invalid or expired reset code');
     }
-
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
     let result;
     switch (role) {
       case 'user':
-        result = await this.userService.updatePassword(email, hashedPassword);
+        result = await this.userService.updatePassword(email, newPassword);
         break;
       case 'client':
-        result = await this.clientService.updatePassword(email, hashedPassword);
+        result = await this.clientService.updatePassword(email, newPassword);
         break;
       case 'lessor':
-        result = await this.lessorService.updatePassword(email, hashedPassword);
+        result = await this.lessorService.updatePassword(email, newPassword);
         break;
       default:
         throw new BadRequestException('Invalid role');

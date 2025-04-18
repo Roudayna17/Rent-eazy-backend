@@ -21,9 +21,10 @@ export class Commentaire {
   @UpdateDateColumn()
   updatedAt: Date;
 
-    @ManyToOne(() => Offre, offre => offre.commentaires)
-    @JoinColumn({ name: 'offreId' }) 
-    offre: Offre;
+  @ManyToOne(() => Offre, offre => offre.commentaires, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'offreId' })
+  offre: Offre;
+  
   
     @ManyToOne(() => House, house => house.commentaires, {
       onDelete: 'CASCADE'

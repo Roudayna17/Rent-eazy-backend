@@ -71,13 +71,14 @@ export class ReservationService {
         }
     }
 
-    // reservation.service.ts
-async findByLessor(lessorId: number): Promise<Reservation[]> {
-    return this.reservationRepository.find({
-        where: { offre: { house: { lessor: { id: lessorId } } } },
-        relations: ['client', 'offre', 'offre.house']
-    });
-}
+    async findByLessor(lessorId: number): Promise<Reservation[]> {
+        // Ici, on recherche les réservations dont l'offre est liée à une maison dont le bailleur (lessor) a l'ID fourni.
+        return this.reservationRepository.find({
+          where: { offre: { house: { lessor: { id: lessorId } } } },
+          relations: ['client', 'offre', 'offre.house'],
+        });
+      }
+   
 
 async acceptReservation(id: number, message?: string): Promise<Reservation> {
     const reservation = await this.reservationRepository.findOne({
@@ -134,6 +135,88 @@ async getUnreadCount(clientId: number): Promise<number> {
             client: { id: clientId },
             isRead: false
         }
+    });
+}
+async getReservationStatistics() {
+    const statusStats = await this.reservationRepository
+        .createQueryBuilder('reservation')
+        .select('reservation.status as status')
+        .addSelect('COUNT(*) as count')
+        .groupBy('reservation.status')
+        .getRawMany();
+
+    const monthlyStats = await this.reservationRepository
+        .createQueryBuilder('reservation')
+        .select("DATE_TRUNC('month', reservation.createdAt)", 'month')
+        .addSelect('COUNT(*)', 'count')
+        .groupBy('month')
+        .orderBy('month', 'DESC')
+        .limit(12)
+        .getRawMany();
+
+    // Get average response time
+    const avgResponseTime = await this.reservationRepository
+        .createQueryBuilder('reservation')
+        .select('AVG(EXTRACT(EPOCH FROM (reservation.decisionDate - reservation.createdAt)))/3600', 'averageHours')
+        .where('reservation.decisionDate IS NOT NULL')
+        .getRawOne();
+
+    // Get acceptance rate
+   // Get acceptance rate
+const acceptanceRate = await this.reservationRepository
+.createQueryBuilder('reservation')
+.select([
+  'COUNT(*) FILTER (WHERE status = true)::float / NULLIF(COUNT(*), 0)::float * 100 AS "acceptanceRate"',
+  'COUNT(*) AS total',
+  'COUNT(*) FILTER (WHERE status = true) AS accepted',
+  'COUNT(*) FILTER (WHERE status = false) AS rejected'
+])
+.getRawOne();
+
+
+    return {
+        statusDistribution: statusStats,
+        monthlyTrends: monthlyStats,
+        averageResponseTime: avgResponseTime?.averageHours || 0,
+        acceptanceMetrics: acceptanceRate
+    };
+}
+async getReservationsPerLessor() {
+    return this.reservationRepository
+        .createQueryBuilder('reservation')
+        .leftJoin('reservation.offre', 'offre')
+        .leftJoin('offre.house', 'house')
+        .leftJoin('house.lessor', 'lessor')
+        .select('lessor.id', 'lessorId')
+        .addSelect('lessor.firstName', 'lessorName')
+        .addSelect('COUNT(reservation.id)', 'reservation_count')
+        .addSelect('COUNT(*) FILTER (WHERE reservation.status = true)', 'accepted_reservations')
+        .groupBy('lessor.id')
+        .addGroupBy('lessor.firstName')
+        .getRawMany();
+}
+
+
+
+async getReservationTrends() {
+    return this.reservationRepository
+        .createQueryBuilder('reservation')
+        .select([
+            "DATE_TRUNC('day', reservation.createdat) AS date",
+            "COUNT(*) AS totalCount",
+            "COUNT(*) FILTER (WHERE status = true) AS acceptedCount",
+            "COUNT(*) FILTER (WHERE status = false) AS rejectedCount",
+          ])
+          .groupBy('date')
+          .orderBy('date', 'DESC')
+          .limit(30)
+          .getRawMany();
+}
+async getRecentReservationsWithDetails(limit: number = 5) {
+    return this.reservationRepository.find({
+        relations: ['client', 'offre', 'offre.house'],
+        order: { createdAt: 'DESC' },
+        take: limit
     });
 }
 }
