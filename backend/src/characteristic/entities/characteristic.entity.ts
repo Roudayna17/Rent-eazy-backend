@@ -1,5 +1,5 @@
 import { House } from 'src/house/entities/house.entity';
-import { Column, Entity, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate, ManyToOne, JoinColumn, OneToMany, ManyToMany } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate, ManyToOne, JoinColumn, OneToMany, ManyToMany, JoinTable } from 'typeorm';
 
 @Entity('characteristic')
 export class Characteristic {
@@ -45,7 +45,12 @@ export class Characteristic {
   @Column('date', { name: 'deleted_at', nullable: true })
   deleted_at: Date;
   
-  @ManyToMany(() => House, (house) => house.characteristics)
+  @ManyToMany(() => House, (house) => house.characteristics, {
+    onDelete: 'CASCADE',
+  })
+  @JoinTable({
+    name: 'house_characteristics_characteristic',
+  })
   houses: House[];
 
 

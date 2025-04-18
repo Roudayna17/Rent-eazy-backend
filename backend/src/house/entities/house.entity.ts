@@ -41,8 +41,6 @@ export class House {
     bedrooms  : number;
     @Column("integer", { name: "bathrooms", nullable: true })
     bathrooms  : number;
-    @Column("text", { name: "status", nullable: true })
-    status  : string;
     @Column("double precision", { name: "price", nullable: true })
     price: number;
     @Column("double precision", { name: "latitude", nullable: true })

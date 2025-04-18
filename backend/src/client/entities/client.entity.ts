@@ -29,19 +29,25 @@ export class Client {
     codePostal: string;
     @Column("text",{name:"telephone",nullable:true})
     telephone: string;
-    @Column("text",{name:"created_at",nullable:true})
+    @Column("date", { name: "createdAt", nullable: true })
     created_at: Date;
     @Column("date",{name:"updateAt",nullable:true})
     updated_at: Date;
     @Column("date",{name:"deleteAt",nullable:true})
     deleted_at: Date;
-    @OneToMany(() => Reservation, (reservation) => reservation.client,)
-    reservations: Reservation[];
-    @OneToMany(() => Commentaire, commentaire => commentaire.client)
-    commentaires: Commentaire[];
+    @OneToMany(() => Reservation, (reservation) => reservation.client, {
+        cascade: true,         
+        onDelete: 'CASCADE'     
+      })
+      reservations: Reservation[];
+    @OneToMany(() => Commentaire, (commentaire) => commentaire.client, {
+        cascade: true,
+        onDelete: 'CASCADE',
+      })
+      commentaires: Commentaire[];
     @BeforeInsert()
     DateCreateAT(){
-        this.created_at= new Date()// date de systeme
+        this.created_at= new Date()
     }
     @BeforeUpdate()
     DateUpdateAT(){

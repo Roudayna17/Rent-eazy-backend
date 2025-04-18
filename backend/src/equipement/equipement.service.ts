@@ -66,14 +66,23 @@ export class EquipementService {
 
  
   async removeMultiple(toDelete: number[]) {
-    // Vérifie que tous les éléments du tableau sont des nombres valides
     const allIntegers = toDelete.every((item) => Number.isInteger(item));
     if (!allIntegers) {
       throw new Error('Les IDs fournis ne sont pas valides');
     }
-
-    // Supprime les équipements
-    const result = await this.equipementRepository.delete(toDelete);
-    return result.affected > 0;
+  
+    return this.equipementRepository.manager.transaction(async (transactionalEntityManager) => {
+      // First delete from junction table
+      await transactionalEntityManager
+        .createQueryBuilder()
+        .delete()
+        .from('house_equipment_equipment')
+        .where('equipmentId IN (:...ids)', { ids: toDelete })
+        .execute();
+  
+      // Then delete equipment
+      const result = await transactionalEntityManager.delete(Equipment, toDelete);
+      return result.affected > 0;
+    });
   }
 }

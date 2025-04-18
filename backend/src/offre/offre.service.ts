@@ -68,27 +68,127 @@ export class OffreService {
       delete(id: number) {
         this.offreRepository.delete(id)
       }
-        
-      async removeMultiple(toDelete: number[]) {   
-        console.log("toDelete",toDelete)
   
-        let resultDelete: boolean = null
-        let resultDisable: boolean = null
-        const allIntegers = toDelete.every(item => Number.isInteger(item));
-    if (!allIntegers) {
-        return;
+      async removeMultiple(ids: number[]) {   
+        console.log("IDs à supprimer:", ids);
+      
+        // Vérification que tous les IDs sont des entiers valides
+        if (!ids.every(id => Number.isInteger(id))) {
+          throw new Error('Format d\'ID invalide');
+        }
+      
+        if (ids.length === 0) {
+          throw new Error('Aucun ID fourni');
+        }
+      
+        // Vérifier d'abord si les offres existent
+        const existingOffers = await this.offreRepository.find({
+          where: ids.map(id => ({ id }))
+        });
+      
+        if (existingOffers.length !== ids.length) {
+          const foundIds = existingOffers.map(o => o.id);
+          const missingIds = ids.filter(id => !foundIds.includes(id));
+          throw new Error(`Certaines offres n'existent pas (IDs: ${missingIds.join(', ')})`);
+        }
+      
+        try {
+          const deleteResult = await this.offreRepository.delete(ids);
+          
+          if (deleteResult.affected === 0) {
+            throw new Error('Aucune offre supprimée (aucune correspondance trouvée)');
+          } else if (deleteResult.affected !== ids.length) {
+            throw new Error(`Seulement ${deleteResult.affected} sur ${ids.length} offres ont été supprimées`);
+          }
+          
+          return { success: true, deletedCount: deleteResult.affected };
+        } catch (error) {
+          console.error('Erreur lors de la suppression:', error);
+          throw new Error(`Échec de la suppression: ${error.message}`);
+        }
+      }
+      async getOfferStatistics() {
+        const priceStats = await this.offreRepository
+            .createQueryBuilder('offre')
+            .select([
+                'AVG(offre.priceTTC) AS averagePrice',
+                'MIN(offre.priceTTC) AS minPrice',
+                'MAX(offre.priceTTC) AS maxPrice'
+            ])
+            .getRawOne();
+    
+        const offerTrends = await this.offreRepository
+            .createQueryBuilder('offre')
+            .select("DATE_TRUNC('month', offre.createdAt)", 'month')
+            .addSelect('COUNT(*)', 'count')
+            .groupBy('month')
+            .orderBy('month', 'DESC')
+            .limit(12)
+            .getRawMany();
+    
+        const activeHouses = await this.offreRepository
+            .createQueryBuilder('offre')
+            .leftJoin('offre.house', 'house')
+            .select('house.id', 'houseId')
+            .addSelect('COUNT(offre.id) as offerCount')
+            .groupBy('house.id')
+            .orderBy('offerCount', 'DESC')
+            .limit(5)
+            .getRawMany();
+    
+        const formattedActiveHouses = activeHouses.map(house => ({
+            houseId: house.houseId,
+            offerCount: house.offerCount
+        }));
+    
+        // Nouvelle logique pour obtenir les nouvelles statistiques
+        const totalOffers = await this.offreRepository.count();
+        const lastOffer = await this.offreRepository
+            .createQueryBuilder('offre')
+            .orderBy('offre.createdAt', 'DESC')
+            .getOne();
+    
+        const mostCommentedOffer = await this.offreRepository
+            .createQueryBuilder('offre')
+            .leftJoin('offre.commentaires', 'commentaire')
+            .select('offre.id', 'offreId')
+            .addSelect('COUNT(commentaire.id) as commentCount')
+            .groupBy('offre.id')
+            .orderBy('commentCount', 'DESC')
+            .getRawOne();
+    
+        const mostReservedOffer = await this.offreRepository
+            .createQueryBuilder('offre')
+            .leftJoin('offre.reservations', 'reservation')
+            .select('offre.id', 'offreId')
+            .addSelect('COUNT(reservation.id) as reservationCount')
+            .groupBy('offre.id')
+            .orderBy('reservationCount', 'DESC')
+            .getRawOne();
+    
+        return {
+            priceStatistics: priceStats,
+            monthlyTrends: offerTrends,
+            topHouses: formattedActiveHouses,
+            totalOffers: totalOffers,
+            lastOffer: lastOffer,
+            mostCommentedOffer: mostCommentedOffer,
+            mostReservedOffer: mostReservedOffer
+        };
+    }
+  
+    async getOffersWithReservationCount() {
+        return this.offreRepository
+            .createQueryBuilder('offre')
+            .leftJoin('offre.reservations', 'reservation')
+            .select('offre.id', 'offreId')
+            .addSelect('offre.title', 'title')
+            .addSelect('COUNT(reservation.id)', 'reservationcount')
+            .groupBy('offre.id')
+            .addGroupBy('offre.title')
+            .orderBy('reservationcount', 'DESC')
+            .getRawMany();
     }
     
-        if (toDelete.length != 0) {
-          if (await this.offreRepository.delete(toDelete)) {
-            resultDelete = true
-          } else
-            resultDelete = false
-        }
-    
-      return true 
-      }
-     
-      
     }
     

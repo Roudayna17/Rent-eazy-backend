@@ -1,5 +1,5 @@
   import { House } from 'src/house/entities/house.entity';
-  import { Column, Entity, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate, ManyToOne, JoinColumn, OneToMany, ManyToMany } from 'typeorm';
+  import { Column, Entity, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate, ManyToOne, JoinColumn, OneToMany, ManyToMany, JoinTable } from 'typeorm';
 
   @Entity('Equipment')
   export class Equipment {
@@ -33,9 +33,13 @@
           @Column("date",{name:"deleted_by",nullable:true})
           deleted_by: number;
           
-          @ManyToMany(() => House, (house) => house.Equipment)
+          @ManyToMany(() => House, (house) => house.Equipment, {
+            onDelete: 'CASCADE',
+          })
+          @JoinTable({
+            name: 'house_equipment_equipment',
+          })
           houses: House[];
-
           
           @BeforeInsert()
           setCreateDate() {

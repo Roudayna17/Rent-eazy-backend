@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { LessorService } from './lessor.service';
 import { CreateLessorDto } from './dto/create-lessor.dto';
 import { UpdateLessorDto } from './dto/update-lessor.dto';
@@ -36,4 +36,21 @@ update(@Param('id') id: string, @Body() updateLessorDto: UpdateLessorDto) {
     console.log("listUser",lessorList)
     this.lessorService.removeMultiple(lessorList["ids"])
   }
+  
+  @Get('analytics/growth')
+  async getLessorGrowthStats() {
+    return this.lessorService.getLessorGrowthStats();
+  }
+  @Get('analytics/statistics')
+async getStatistics() {
+  return this.lessorService.getStatistics();
+}
+
+
+@Get('analytics/summary')
+async getLessorSummaryStats() {
+  return this.lessorService.getLessorSummaryStats();
+}
+
+
 }

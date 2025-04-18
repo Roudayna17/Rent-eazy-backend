@@ -189,13 +189,9 @@ export class AuthService {
       where: { email, role, code },
     });
 
-    // Check if the record exists and is not expired
     if (!resetRecord || resetRecord.expiresAt < new Date()) {
       throw new BadRequestException('Invalid or expired reset code');
     }
-
-    // Hash the new password
-    // const hashedPassword = await bcrypt.hash(newPassword, 10);
     let result;
     switch (role) {
       case 'user':

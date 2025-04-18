@@ -30,8 +30,8 @@ console.log("hash",hash)
 return hash
 }
 findAll() {
-    return  this.userRepository.findAndCount({relations:['notifications','houses']})
-  }
+  return this.userRepository.findAndCount({relations:['houses']})
+}
 
   findOne(idUser: number) {
     return  this.userRepository.findOne({where:{id:idUser}})

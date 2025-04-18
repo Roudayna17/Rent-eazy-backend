@@ -17,7 +17,7 @@ export class CreateHouseDto {
   latitude: number;
   longitude: number;
   pictures: Picture[];
-// Dans CreateHouseDto et UpdateHouseDto
+  userId:number;
 Equipment?: { equipementId: number; quantite: number }[];
  characteristics?: { characteristicId: number; quantite: number }[];
   created_by: number;

@@ -73,16 +73,104 @@ if (!allIntegers) {
  findByEmail(email: string) {
   return this.lessorRepository.findOne({where:{email:email}})
 }
-  // New updatePassword method
   async updatePassword(email: string, newPassword: string): Promise<Lessor> {
     // Find the user by email
     const lessor = await this.findByEmail(email);
     if (!lessor) {
       throw new NotFoundException('User not found');
     }
-    // Hash the new password
     lessor.password = await this.hashPassword(newPassword);
-    // Save the updated user
     return this.lessorRepository.save(lessor);
   }
+  
+
+  async getStatistics() {
+    const totalLessors = await this.lessorRepository.count();
+    const recentLessors = await this.lessorRepository
+      .createQueryBuilder('lessor')
+      .select([
+        "DATE_TRUNC('month', lessor.created_at) as month",
+        'COUNT(*) as newLessors'
+      ])
+      .groupBy('month')
+      .orderBy('month', 'DESC')
+      .limit(12)
+      .getRawMany();
+  
+    return {
+      totalLessors,
+      recentLessors
+    };
+  }
+  
+ 
+
+  async getLessorGrowthStats() {
+    return this.lessorRepository
+      .createQueryBuilder('lessor')
+      .select([
+        "DATE_TRUNC('month', lessor.created_at) as month",
+        'COUNT(*) as newLessors',
+        'COUNT(DISTINCT house.id) as newProperties'
+      ])
+      .leftJoin('lessor.houses', 'house')
+      .groupBy('month')
+      .orderBy('month', 'DESC')
+      .limit(12)
+      .getRawMany();
+  }
+  async getLessorSummaryStats() {
+    const totalLessors = await this.lessorRepository.count();
+  
+    const topLessorByHouses = await this.lessorRepository
+      .createQueryBuilder('lessor')
+      .leftJoin('lessor.houses', 'house')
+      .select([
+        'lessor.id as lessorId',
+        'lessor.firstName as lessorName',
+        'COUNT(house.id) as houseCount'
+      ])
+      .groupBy('lessor.id')
+      .addGroupBy('lessor.firstName')
+      .orderBy('houseCount', 'DESC')
+      .limit(1)
+      .getRawOne();
+  
+    const topLessorByOffers = await this.lessorRepository
+      .createQueryBuilder('lessor')
+      .leftJoin('lessor.houses', 'house')
+      .leftJoin('house.offers', 'offer')
+      .select([
+        'lessor.id as lessorId',
+        'lessor.firstName as lessorName',
+        'COUNT(offer.id) as offerCount'
+      ])
+      .groupBy('lessor.id')
+      .addGroupBy('lessor.firstName')
+      .orderBy('offerCount', 'DESC')
+      .limit(1)
+      .getRawOne();
+  
+    const lastLessorWithOffer = await this.lessorRepository
+      .createQueryBuilder('lessor')
+      .leftJoin('lessor.houses', 'house')
+      .leftJoin('house.offers', 'offer')
+      .where('offer.id IS NOT NULL')
+      .orderBy('offer.created_at', 'DESC')
+      .select([
+        'lessor.id as lessorId',
+        'lessor.firstName as lessorName',
+        'offer.created_at as lastOfferDate'
+      ])
+      .limit(1)
+      .getRawOne();
+  
+    return {
+      totalLessors,
+      topLessorByHouses,
+      topLessorByOffers,
+      lastLessorWithOffer,
+    };
+  }
+  
 }

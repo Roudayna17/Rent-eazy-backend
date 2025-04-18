@@ -79,10 +79,70 @@ export class CommentaireService {
   async getAverageRatingByOffre(offreId: number): Promise<number> {
     const result = await this.commentaireRepository
       .createQueryBuilder('commentaire')
-      .select('AVG(commentaire.rating)', 'average')
+      .select('AVG(commentaire.rating) as average')
       .where('commentaire.offreId = :offreId', { offreId })
       .getRawOne();
 
     return parseFloat(result.average) || 0;
   }
+
+  async getCommentStats() {
+    const ratingsDistribution = await this.commentaireRepository
+      .createQueryBuilder('comment')
+      .select('comment.rating', 'rating')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('comment.rating')
+      .orderBy('rating', 'DESC')
+      .getRawMany();
+
+    const recentTrends = await this.commentaireRepository
+      .createQueryBuilder('comment')
+      .select("DATE_TRUNC('month', comment.createdAt) as month")
+      .addSelect('COUNT(*) as totalComments')
+      .addSelect('AVG(comment.rating) as averageRating')
+      .groupBy('month')
+      .orderBy('month', 'DESC')
+      .limit(6)
+      .getRawMany();
+
+    const topReviewers = await this.commentaireRepository
+      .createQueryBuilder('comment')
+      .leftJoin('comment.client', 'client')
+      .select('client.id', 'clientId')
+      .addSelect('client.firstName as clientName')
+      .addSelect('COUNT(*)  as commentCount')
+      .addSelect('AVG(comment.rating) as averageRating')
+      .groupBy('client.id')
+      .addGroupBy('client.firstName')
+      .orderBy('commentCount', 'DESC')
+      .limit(10)
+      .getRawMany();
+
+    return {
+      ratingsDistribution,
+      recentTrends,
+      topReviewers
+    };
+  }
+
+  async getCommentAnalyticsByHouse(houseId: number) {
+    return this.commentaireRepository
+      .createQueryBuilder('comment')
+      .leftJoin('comment.house', 'house')
+      .where('house.id = :houseId', { houseId })
+      .select([
+        'AVG(comment.rating) as averageRating',
+        'COUNT(*) as totalComments',
+        'COUNT(CASE WHEN comment.rating >= 4 THEN 1 END) as positiveComments'
+      ])
+      .getRawOne();
+  }
+  async getRecentComments(limit: number): Promise<Commentaire[]> {
+    return this.commentaireRepository.find({
+      take: limit,
+      order: { createdAt: 'DESC' },
+      relations: ['client', 'offre', 'house'],
+    });
+  }
+  
 }

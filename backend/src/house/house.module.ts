@@ -12,11 +12,12 @@ import { Offre } from 'src/offre/entities/offre.entity';
 import { Equipment } from 'src/equipement/entities/equipement.entity';
 import { Characteristic } from 'src/characteristic/entities/characteristic.entity';
 import { Picture } from 'src/pictures/entities/picture.entity';
+import { User } from 'src/user/entities/user.entity';
 
 @Module({
   controllers: [HouseController],
   providers: [HouseService],
   exports: [HouseService, TypeOrmModule.forFeature([House])], // Exportez correctement
-    imports:[TypeOrmModule.forFeature([House,Lessor,Offre,Equipment,Characteristic,Picture]),PicturesModule,EquipementModule,CharacteristicModule,OffreModule]
+    imports:[TypeOrmModule.forFeature([House,Lessor,Offre,Equipment,Characteristic,Picture,User]),PicturesModule,EquipementModule,CharacteristicModule,OffreModule]
 })
 export class HouseModule {}

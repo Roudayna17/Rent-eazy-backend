@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Delete, Param, ParseIntPipe, Patch } from '@nestjs/common';
+import { Controller, Get, Post, Body, Delete, Param, ParseIntPipe, Patch, Query } from '@nestjs/common';
 import { ReservationService } from './reservation.service';
 import { CreateReservationDto } from './dto/create-reservation.dto';
 import { Reservation } from './entities/reservation.entity';
@@ -12,16 +12,16 @@ export class ReservationController {
         return this.service.create(dto);
     }
 
-    @Get()
+    @Get() // Route de base pour récupérer toutes les réservations
     async findAll(): Promise<Reservation[]> {
         return this.service.findAll();
     }
 
     // reservation.controller.ts
-@Get('lessor/:lessorId')
-async findByLessor(@Param('lessorId', ParseIntPipe) lessorId: number): Promise<Reservation[]> {
-    return this.service.findByLessor(lessorId);
-}
+     @Get('lessor/:lessorId')
+     async findByLessor(@Param('lessorId', ParseIntPipe) lessorId: number): Promise<Reservation[]> {
+     return this.service.findByLessor(lessorId);
+     }
 
     @Delete(':id')
     async delete(@Param('id', ParseIntPipe) id: number): Promise<void> {
@@ -56,5 +56,31 @@ async getUnreadCount(@Param('clientId', ParseIntPipe) clientId: number): Promise
 @Patch(':id/mark-as-read')
 async markAsRead(@Param('id', ParseIntPipe) id: number): Promise<Reservation> {
     return this.service.markAsRead(id);
+}
+@Get('analytics/statistics')
+    async getReservationStats() {
+        return this.service.getReservationStatistics();
+    }
+
+    @Get('analytics/trends')
+    async getReservationTrends() {
+        return this.service.getReservationTrends();
+    }
+
+    @Get('analytics/lessor-performance')
+    async getReservationsPerLessor() {
+        return this.service.getReservationsPerLessor();
+    }
+   
+    @Get('analytics/monthly/:lessorId')
+    async getLessorMonthlyStats(
+        @Param('lessorId', ParseIntPipe) lessorId: number
+    ) {
+       
+        return this.service.getReservationStatistics();
+    }
+    @Get('recent-with-details')
+async getRecentWithDetails(@Query('limit') limit: number = 5) {
+    return this.service.getRecentReservationsWithDetails(limit);
 }
 }

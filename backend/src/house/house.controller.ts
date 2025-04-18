@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpException, HttpStatus, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpException, HttpStatus, Put, Query } from '@nestjs/common';
 import { HouseService } from './house.service';
 import { CreateHouseDto } from './dto/create-house.dto';
 import { UpdateHouseDto } from './dto/update-house.dto';
@@ -49,14 +49,6 @@ export class HouseController {
         }
     }
 
-    @Patch('valide-house/:id')
-    async ValidationHouse(@Param('id') id: string, @Body() updateHouseDto: House) {
-        try {
-            return await this.houseService.validationStatus(+id, updateHouseDto);
-        } catch (error) {
-            throw new HttpException(error.message, HttpStatus.BAD_REQUEST);
-        }
-    }
     @Delete('delete-house/:id')
     async remove(@Param('id') id: string) {
         try {
@@ -67,15 +59,48 @@ export class HouseController {
     }
 
     @Post('delete-multiple')
-    async deleteMultipleHouses(@Body() body: { ids: number[] }) {
+async deleteMultipleHouses(@Body() body: { ids: number[] }) {
+  try {
+    if (!body.ids || !Array.isArray(body.ids)) {
+      throw new HttpException('Invalid request body', HttpStatus.BAD_REQUEST);
+    }
+    return await this.houseService.removeMultiple(body.ids);
+  } catch (error) {
+    throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+}
+    @Get('filter/price')
+    async getHousesByPriceRange(
+        @Query('min') minPrice: number,
+        @Query('max') maxPrice: number
+    ) {
         try {
-            if (!body.ids || !Array.isArray(body.ids)) {
-                throw new HttpException('Invalid request body', HttpStatus.BAD_REQUEST);
-            }
-            return await this.houseService.removeMultiple(body.ids);
+            return await this.houseService.findByPriceRange(minPrice, maxPrice);
         } catch (error) {
             throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @Get('analytics/lessor-stats')
+    async getHouseCountByLessor() {
+        try {
+            return await this.houseService.getHousesCountByLessor();
+        } catch (error) {
+            throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @Get('analytics/total')
+async getTotalHouses() {
+  try {
+    const total = await this.houseService.getTotalHouseCount();
+    return { total };
+  } catch (error) {
+    throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+}
+@Get('analytics/by-type')
+getHouseStatisticsByType() {
+  return this.houseService.getStatisticsByType();
+}
 
 }

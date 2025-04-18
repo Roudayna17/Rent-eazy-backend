@@ -1,5 +1,5 @@
 
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateHouseDto } from './dto/create-house.dto';
 import { UpdateHouseDto } from './dto/update-house.dto';
@@ -9,6 +9,7 @@ import { Picture } from 'src/pictures/entities/picture.entity';
 import { Characteristic } from 'src/characteristic/entities/characteristic.entity';
 import { Equipment } from 'src/equipement/entities/equipement.entity';
 import { Lessor } from 'src/lessor/entities/lessor.entity';
+import { User } from 'src/user/entities/user.entity';
 
 @Injectable()
 export class HouseService {
@@ -23,44 +24,62 @@ export class HouseService {
     private readonly characteristicRepository: Repository<Characteristic>,
     @InjectRepository(Lessor)
     private readonly lessorRepository: Repository<Lessor>,
+    @InjectRepository(User)
+    private readonly UserRepository: Repository<User>,
+
 
   ) {}
   async create(houseData: CreateHouseDto) {
-    const lessor = await this.lessorRepository.findOne({
-      where: { id: houseData.lessorId }
-    });
-  
-    if (!lessor) {
-      throw new NotFoundException(`Lessor with ID ${houseData.lessorId} not found`);
+    // Validation
+    if (!houseData.lessorId && !houseData.userId) {
+        throw new BadRequestException('Either lessorId or userId must be provided');
     }
-  
-  const house = this.houseRepository.create({
-    ...houseData,
-    lessor,
-    Equipment: [],
-    characteristics: [],
-    pictures:[]
-  });
-house.status="review"
- console.log(" houseData",houseData)
-    // Gérer les équipements
+
+    let lessor: Lessor | null = null;
+    let user: User | null = null;
+
+    // Gestion pour app mobile (lessor)
+    if (houseData.lessorId) {
+        lessor = await this.lessorRepository.findOne({
+            where: { id: houseData.lessorId }
+        });
+        if (!lessor) {
+            throw new NotFoundException(`Lessor with ID ${houseData.lessorId} not found`);
+        }
+    }
+
+    // Gestion pour site web (user)
+    if (houseData.userId) {
+        user = await this.UserRepository.findOne({
+            where: { id: houseData.userId }
+        });
+        if (!user) {
+            throw new NotFoundException(`User with ID ${houseData.userId} not found`);
+        }
+    }
+
+    const house = this.houseRepository.create({
+        ...houseData,
+        lessor,
+        user,
+        Equipment: [],
+        characteristics: [],
+        pictures: [],
+    });
+
+    // Gestion des équipements
     if (houseData.Equipment?.length) {
-        // Récupérer les équipements existants
         const equipments = await this.equipementRepository.findByIds(
             houseData.Equipment.map(e => e.equipementId)
         );
-        
-        // Assigner les équipements à la maison
         house.Equipment = equipments;
-        
-        // Créer l'objet quantities
         house.equipementsQuantities = {};
         houseData.Equipment.forEach(eq => {
             house.equipementsQuantities[eq.equipementId] = eq.quantite;
         });
     }
 
-    // Gérer les caractéristiques (identique à votre code actuel)
+    // Gestion des caractéristiques
     if (houseData.characteristics?.length) {
         const charIds = houseData.characteristics.map(c => c.characteristicId);
         house.characteristics = await this.characteristicRepository.findByIds(charIds);
@@ -69,7 +88,10 @@ house.status="review"
             return acc;
         }, {});
     }
-     const savedHouse = await this.houseRepository.save(house);
+
+    const savedHouse = await this.houseRepository.save(house);
+
+    // Gestion des images
     if (houseData.pictures?.length) {
         const pictures = houseData.pictures.map(pic => {
             const picture = new Picture();
@@ -83,8 +105,10 @@ house.status="review"
         await this.pictureRepository.save(pictures);
     }
 
-    return savedHouse
+    return savedHouse;
 }
+
+
 async findOne(id: number) {
   const house = await this.houseRepository.findOne({
     where: { id },
@@ -209,36 +233,135 @@ async delete(id: number, lessorId?: number): Promise<{ message: string }> {
     if (!ids || ids.length === 0) {
       throw new Error('No IDs provided');
     }
-
+  
     if (!ids.every(id => Number.isInteger(id))) {
       throw new Error('Invalid ID format');
     }
-
+  
     try {
+      // Supprimer d'abord les pictures associées
+      await this.pictureRepository
+        .createQueryBuilder()
+        .delete()
+        .where("houseId IN (:...ids)", { ids })
+        .execute();
+  
+      // Puis supprimer les maisons
       await this.houseRepository
         .createQueryBuilder()
-        .update(House)
-        .set({ active: false })
+        .delete()
         .whereInIds(ids)
         .execute();
-
+  
       return true;
     } catch (error) {
-      throw new Error(`Failed to deactivate houses: ${error.message}`);
+      throw new Error(`Failed to delete houses: ${error.message}`);
     }
   }
+
+
   async findByLessorId(lessorId: number) {
     return this.houseRepository.find({
         where: { lessor: { id: lessorId } },
         relations: ['pictures', 'Equipment', 'characteristics', 'lessor'],
     });
 }
-validationStatus(id:number,houseData:House){
-  houseData.status="complete"
-   let house= this.houseRepository.preload({
-    id:+id,
-  ...houseData  })
+
+
+
+async findByPriceRange(minPrice: number, maxPrice: number) {
+  return this.houseRepository
+      .createQueryBuilder('house')
+      .where('house.price BETWEEN :minPrice AND :maxPrice', { minPrice, maxPrice })
+      .andWhere('house.active = :active', { active: true })
+      .leftJoinAndSelect('house.pictures', 'pictures')
+      .getMany();
 }
 
+async getHousesCountByLessor(): Promise<any[]> {
+  return this.houseRepository
+      .createQueryBuilder('house')
+      .leftJoin('house.lessor', 'lessor')
+      .select('lessor.id', 'lessorId')
+      .addSelect('lessor.firstname', 'lessorName')
+      .addSelect('COUNT(house.id)', 'count')
+      .groupBy('lessor.id')
+      .addGroupBy('lessor.firstname')
+      .getRawMany();
+}
+async getTotalHouseCount(): Promise<number> {
+  return await this.houseRepository.count();
+}
+
+
+async findRecentHouses(limit: number = 5) {
+  return this.houseRepository
+      .createQueryBuilder('house')
+      .where('house.active = :active', { active: true })
+      .orderBy('house.createdAt', 'DESC')
+      .take(limit)
+      .leftJoinAndSelect('house.pictures', 'pictures')
+      .getMany();
+}
+
+async getHouseTypeStatistics() {
+  const typeDistribution = await this.houseRepository
+      .createQueryBuilder('house')
+      .select('house.type', 'houseType')
+      .addSelect('COUNT(*)', 'count')
+      .addSelect('AVG(house.price)', 'averagePrice')
+      .groupBy('house.type')
+      .getRawMany();
+
+  const popularTypes = await this.houseRepository
+      .createQueryBuilder('house')
+      .leftJoin('house.offers', 'offer')
+      .leftJoin('offer.reservations', 'reservation')
+      .select('house.type', 'houseType')
+      .addSelect('COUNT(DISTINCT reservation.id)', 'reservationCount')
+      .groupBy('house.type')
+      .orderBy('reservationCount', 'DESC')
+      .getRawMany();
+
+  // Average price by type and city
+  const priceByLocationAndType = await this.houseRepository
+      .createQueryBuilder('house')
+      .select(['house.type', 'house.city'])
+      .addSelect('AVG(house.price)', 'averagePrice')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('house.type')
+      .addGroupBy('house.city')
+      .having('COUNT(*) > 0')
+      .getRawMany();
+
+  return {
+      typeDistribution,
+      popularTypes,
+      priceByLocationAndType
+  };
+}
+
+async findByTypeAndPrice(type: string, maxPrice: number) {
+  return this.houseRepository
+      .createQueryBuilder('house')
+      .where('house.type = :type', { type })
+      .andWhere('house.price <= :maxPrice', { maxPrice })
+      .andWhere('house.active = :active', { active: true })
+      .leftJoinAndSelect('house.pictures', 'pictures')
+      .orderBy('house.price', 'ASC')
+      .getMany();
+}
+async getStatisticsByType(): Promise<any[]> {
+  return this.houseRepository
+    .createQueryBuilder('house')
+    .select('house.type', 'type')
+    .addSelect('COUNT(*)', 'count')
+    .addSelect('AVG(house.price) as averagePrice')
+    .addSelect('MIN(house.price) as minPrice')
+    .addSelect('MAX(house.price) as maxPrice')
+    .where('house.active = :active', { active: true })
+    .groupBy('house.type')
+    .getRawMany();
+}
 
 }

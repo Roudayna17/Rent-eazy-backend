@@ -31,4 +31,26 @@ export class CommentaireController {
   getAverageRating(@Param('offreId', ParseIntPipe) offreId: number) {
     return this.commentaireService.getAverageRatingByOffre(offreId);
   }
+  @Get('analytics/statistics')
+  async getCommentStatistics() {
+    return this.commentaireService.getCommentStats();
+  }
+
+  @Get('analytics/house/:houseId')
+  async getHouseCommentAnalytics(@Param('houseId', ParseIntPipe) houseId: number) {
+    return this.commentaireService.getCommentAnalyticsByHouse(houseId);
+  }
+
+  @Get('analytics/trends')
+  async getCommentTrends(
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string
+  ) {
+    return this.commentaireService.getCommentStats();
+  }
+  @Get('recent')
+getRecentComments(@Query('limit') limit = 5) {
+  return this.commentaireService.getRecentComments(limit);
+}
+
 }

@@ -36,4 +36,27 @@ export class ClientController {
     console.log("listUser",listUser)
     this.clientService.removeMultiple(listUser)
   }
+
+  @Get('analytics/statistics')
+  async getClientStats() {
+    return this.clientService.getClientStatistics();
+  }
+
+  @Get('analytics/client/:id')
+  async getClientActivity(@Param('id') id: number) {
+    return this.clientService.getClientDetailsWithActivity(id);
+  }
+  @Get('analytics/total')
+getTotalClients() {
+  return this.clientService.getTotalClients();
+}
+@Get('analytics/activity-metrics')
+async getActivityMetrics() {
+    return this.clientService.getClientActivityMetrics();
+}
+
+@Get('analytics/registration-trends')
+async getRegistrationTrends() {
+    return this.clientService.getClientRegistrationTrends();
+}
 }
