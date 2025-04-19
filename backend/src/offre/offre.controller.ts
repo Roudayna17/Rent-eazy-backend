@@ -65,30 +65,11 @@ export class OffreController {
   remove(@Param('id') id: string) {
     return this.offreService.delete(+id);
   }
-  @Post('delete-multiple')
-  async deleteMultipleOffres(@Body() body: { ids: number[] }) {
-    try {
-      if (!body.ids || !Array.isArray(body.ids)) {
-        throw new HttpException('Liste d\'IDs invalide', HttpStatus.BAD_REQUEST);
-      }
-  
-      const result = await this.offreService.removeMultiple(body.ids);
-      
-      if (result) {
-        return { 
-          success: true,
-          message: `${body.ids.length} offre(s) supprimée(s) avec succès`
-        };
-      } else {
-        throw new HttpException('Échec de la suppression', HttpStatus.INTERNAL_SERVER_ERROR);
-      }
-    } catch (error) {
-      throw new HttpException(
-        error.message,
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
-      );
-    }
-  }
+  // offre.controller.ts
+@Post('delete-multiple')
+async deleteMultipleOffres(@Body() body: { ids: number[] }) {
+    return this.offreService.removeMultiple(body.ids);
+}
   @Get('analytics/stats')
   async getOfferStatistics() {
     try {
@@ -107,4 +88,13 @@ export class OffreController {
       throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
+
+  @Get('lessor/:lessorId')
+async getOffersByLessorId(@Param('lessorId', ParseIntPipe) lessorId: number) {
+    try {
+        return await this.offreService.findByLessorId(lessorId);
+    } catch (error) {
+        throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+}
 }

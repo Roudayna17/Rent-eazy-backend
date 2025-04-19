@@ -228,7 +228,6 @@ async delete(id: number, lessorId?: number): Promise<{ message: string }> {
       message: `House with ID ${id} and all related data deleted successfully`,
     };
   }
-
   async removeMultiple(ids: number[]) {
     if (!ids || ids.length === 0) {
       throw new Error('No IDs provided');
@@ -239,14 +238,28 @@ async delete(id: number, lessorId?: number): Promise<{ message: string }> {
     }
   
     try {
-      // Supprimer d'abord les pictures associées
+      // 1. First delete pictures
       await this.pictureRepository
         .createQueryBuilder()
         .delete()
         .where("houseId IN (:...ids)", { ids })
         .execute();
   
-      // Puis supprimer les maisons
+      // 2. Remove many-to-many relationships with characteristics
+      await this.houseRepository
+        .createQueryBuilder()
+        .relation(House, 'characteristics')
+        .of(ids)
+        .remove([]); // Empty array removes all relations
+  
+      // 3. Remove many-to-many relationships with equipment
+      await this.houseRepository
+        .createQueryBuilder()
+        .relation(House, 'Equipment')
+        .of(ids)
+        .remove([]);
+  
+      // 4. Now delete the houses
       await this.houseRepository
         .createQueryBuilder()
         .delete()
@@ -266,7 +279,6 @@ async delete(id: number, lessorId?: number): Promise<{ message: string }> {
         relations: ['pictures', 'Equipment', 'characteristics', 'lessor'],
     });
 }
-
 
 
 async findByPriceRange(minPrice: number, maxPrice: number) {

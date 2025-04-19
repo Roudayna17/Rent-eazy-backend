@@ -58,11 +58,25 @@ export class ReservationService {
       return savedReservation;
   }
 
-    async findAll(): Promise<Reservation[]> {
-        return this.reservationRepository.find({ 
-            relations: ['client', 'offre', 'offre.house']
-        });
-    }
+  // Dans le service (reservation.service.ts)
+async findByUser(userId: number): Promise<Reservation[]> {
+    return this.reservationRepository.find({
+        where: { 
+            offre: { 
+                house: { 
+                    user: { id: userId } 
+                } 
+            } 
+        },
+        relations: ['client', 'offre', 'offre.house', 'offre.house.user'],
+        order: { createdAt: 'DESC' }
+    });
+}
+  async findAll(): Promise<Reservation[]> {
+    return this.reservationRepository.find({ 
+        relations: ['client', 'offre', 'offre.house', 'offre.house.user']
+    });
+}
 
     async delete(id: number): Promise<void> {
         const result = await this.reservationRepository.delete(id);
@@ -214,7 +228,7 @@ async getReservationTrends() {
 }
 async getRecentReservationsWithDetails(limit: number = 5) {
     return this.reservationRepository.find({
-        relations: ['client', 'offre', 'offre.house'],
+        relations: ['client', 'offre', 'offre.house', 'offre.house.user'],
         order: { createdAt: 'DESC' },
         take: limit
     });

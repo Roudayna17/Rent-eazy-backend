@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateOffreDto } from './dto/create-offre.dto';
 import { UpdateOffreDto } from './dto/update-offre.dto';
@@ -69,45 +69,47 @@ export class OffreService {
         this.offreRepository.delete(id)
       }
   
-      async removeMultiple(ids: number[]) {   
-        console.log("IDs à supprimer:", ids);
+      // offre.service.ts
+async removeMultiple(ids: number[]) {
+  // Validation des IDs
+  if (!ids || !Array.isArray(ids)) {
+      throw new HttpException('La liste des IDs est invalide', HttpStatus.BAD_REQUEST);
+  }
+
+  if (ids.length === 0) {
+      return {
+          success: true,
+          deletedCount: 0,
+          message: "Aucune offre à supprimer"
+      };
+  }
+
+  try {
+      // Suppression directe (le check d'existence est géré par TypeORM)
+      const deleteResult = await this.offreRepository.delete(ids);
+
+      return {
+          success: true,
+          deletedCount: deleteResult.affected,
+          message: `${deleteResult.affected} offre(s) supprimée(s) avec succès`
+      };
+  } catch (error) {
+      console.error('Erreur suppression multiple:', error);
       
-        // Vérification que tous les IDs sont des entiers valides
-        if (!ids.every(id => Number.isInteger(id))) {
-          throw new Error('Format d\'ID invalide');
-        }
-      
-        if (ids.length === 0) {
-          throw new Error('Aucun ID fourni');
-        }
-      
-        // Vérifier d'abord si les offres existent
-        const existingOffers = await this.offreRepository.find({
-          where: ids.map(id => ({ id }))
-        });
-      
-        if (existingOffers.length !== ids.length) {
-          const foundIds = existingOffers.map(o => o.id);
-          const missingIds = ids.filter(id => !foundIds.includes(id));
-          throw new Error(`Certaines offres n'existent pas (IDs: ${missingIds.join(', ')})`);
-        }
-      
-        try {
-          const deleteResult = await this.offreRepository.delete(ids);
-          
-          if (deleteResult.affected === 0) {
-            throw new Error('Aucune offre supprimée (aucune correspondance trouvée)');
-          } else if (deleteResult.affected !== ids.length) {
-            throw new Error(`Seulement ${deleteResult.affected} sur ${ids.length} offres ont été supprimées`);
-          }
-          
-          return { success: true, deletedCount: deleteResult.affected };
-        } catch (error) {
-          console.error('Erreur lors de la suppression:', error);
-          throw new Error(`Échec de la suppression: ${error.message}`);
-        }
+      // Gestion spécifique des erreurs TypeORM
+      if (error.code === 'ER_NO_REFERENCED_ROW') {
+          throw new HttpException(
+              'Certaines offres n\'existent pas', 
+              HttpStatus.NOT_FOUND
+          );
       }
-      async getOfferStatistics() {
+
+      throw new HttpException(
+          `Erreur lors de la suppression: ${error.message}`,
+          HttpStatus.INTERNAL_SERVER_ERROR
+      );
+  }
+} async getOfferStatistics() {
         const priceStats = await this.offreRepository
             .createQueryBuilder('offre')
             .select([
@@ -189,6 +191,26 @@ export class OffreService {
             .orderBy('reservationcount', 'DESC')
             .getRawMany();
     }
+
+    async findByLessorId(lessorId: number) {
+      return this.offreRepository.find({
+          where: {
+              house: {
+                  lessor: { id: lessorId }
+              }
+          },
+          relations: [
+              'house', 
+              'house.pictures',
+              'house.lessor',
+              'reservations',
+              'commentaires'
+          ],
+          order: {
+            created_at: 'DESC'
+          }
+      });
+  }
     
     }
     
