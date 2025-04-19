@@ -89,6 +89,15 @@ async deleteMultipleHouses(@Body() body: { ids: number[] }) {
             throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @Get('lessor/:lessorId')
+async getHousesByLessorId(@Param('lessorId') lessorId: number) {
+    try {
+        return await this.houseService.findByLessorId(lessorId);
+    } catch (error) {
+        throw new HttpException(error.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+}
     @Get('analytics/total')
 async getTotalHouses() {
   try {

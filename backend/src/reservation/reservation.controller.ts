@@ -83,4 +83,8 @@ async markAsRead(@Param('id', ParseIntPipe) id: number): Promise<Reservation> {
 async getRecentWithDetails(@Query('limit') limit: number = 5) {
     return this.service.getRecentReservationsWithDetails(limit);
 }
+@Get('user/:userId')
+async findByUser(@Param('userId', ParseIntPipe) userId: number): Promise<Reservation[]> {
+    return this.service.findByUser(userId);
+}
 }
